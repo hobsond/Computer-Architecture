@@ -23,26 +23,29 @@ class CPU:
     def ram_write(self,address,value):
         self.ram[address] = value
         
-    def load(self):
+    def load(self,prog):
         """Load a program into memory."""
-
-        address = 0
-
-        # For now, we've just hardcoded a program:
-
-        program = [
-            # From print8.ls8
-            0b10000010, # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111, # PRN R0
-            0b00000000,
-            0b00000001, # HLT
-        ]
-
-        for instruction in program:
-            self.ram[address] = instruction
-            address += 1
+        program = []
+        try:
+            with open( f"./examples/{prog}.ls8",'r') as f:
+                for i in f.readlines():
+                    if i[0].isdigit() ==False:
+                        continue
+                    x = i.split(' ')
+                    
+                    i = x[0]
+                        
+                    program.append(int(i.strip(),2))
+            address = 0
+            for instruction in program:
+                self.ram[address] = instruction
+                address += 1
+        except FileNotFoundError:
+            print(f'Program : {prog}\n Does Not exist')
+            sys.exit(0)
+        except PermissionError:
+            print(f'Program : {prog}\n Does Not exist')
+            sys.exit(0)
 
 
     def alu(self, op, reg_a, reg_b):
@@ -82,7 +85,7 @@ class CPU:
         self.running =True
         pc = 0 
         while self.running:
-            self.load()
+            self.load(sys.argv[1])
             ir = self.ram_read(pc)
             # print(ir)
             
@@ -102,6 +105,5 @@ class CPU:
 
 cpu = CPU()
 
-cpu.ram_write(212,'hello')
 cpu.run()
 # print(bin(71))
