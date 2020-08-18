@@ -7,29 +7,21 @@ class CPU:
 
     def __init__(self):
         """Construct a new CPU."""
-        self.ram = [[i]for i in range(0,256)]
-        self.reg = [
-            0,
-            0,
-            self.ram,
-            self.ram,
-            0,
-            0,
-            0,
-            0
-        ]
+        self.ram = [0] * 256
+        self.reg = [0] * 8
         self.pc = 0
         self.ir = 1
         self.MAR =2
         self.MDR = 3
         self.fl = 4
+        self.running = False
     
     
     def ram_read(self,address):
-        return self.reg[self.MAR][address]
+        return self.ram[address]
     
     def ram_write(self,address,value):
-        self.reg[self.MAR][address] = value
+        self.ram[address] = value
         
     def load(self):
         """Load a program into memory."""
@@ -82,12 +74,34 @@ class CPU:
 
         print()
 
+    def halt(self):
+            self.running = False
+            
     def run(self):
         """Run the CPU."""
-        pass
+        self.running =True
+        pc = 0 
+        while self.running:
+            self.load()
+            ir = self.ram_read(pc)
+            # print(ir)
+            
+            if ir ==  0b10000010:
+                self.reg[0] = self.ram_read(pc + 2)
+                # self.ram[pc] = 0
+                pc+=2
+                
+            elif ir == 0b1000111:
+                print(self.reg[0])
+                pc +=2
+            elif ir == 0b001:
+                self.halt()
+            else:
+                pc+=1
+            
 
 cpu = CPU()
 
 cpu.ram_write(212,'hello')
-
-print(cpu.ram_read(212))
+cpu.run()
+# print(bin(71))
