@@ -20,8 +20,8 @@ class CPU:
     def ram_read(self,address):
         return self.ram[address]
     
-    def ram_write(self,address,value):
-        self.ram[address] = value
+    # def ram_write(self,address,value):
+    #     self.ram[address] = value
         
     def load(self,prog):
         """Load a program into memory."""
@@ -47,13 +47,18 @@ class CPU:
             print(f'Program : {prog}\n Does Not exist')
             sys.exit(0)
 
-
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
 
         if op == "ADD":
-            self.reg[reg_a] += self.reg[reg_b]
-        #elif op == "SUB": etc
+            self.reg[0] = reg_b + reg_a
+        elif op == "SUB":
+            self.reg[reg_a] -= self.reg[reg_b]
+        elif op == "MULT":
+            self.reg[0] = reg_a * reg_b
+        elif op == "DIV":
+            self.reg[reg_a] /= self.reg[reg_b]
+            
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -79,24 +84,46 @@ class CPU:
 
     def halt(self):
             self.running = False
+    
+    def reg_write(self, address, value):
+        '''
+        Stores value at given address in register
+        '''
+        self.reg[address] = value
             
     def run(self):
         """Run the CPU."""
         self.running =True
         pc = 0 
         while self.running:
+            # load program
             self.load(sys.argv[1])
+            # set the registration
             ir = self.ram_read(pc)
-            # print(ir)
-            
+           
+            #ldi operation
             if ir ==  0b10000010:
-                self.reg[0] = self.ram_read(pc + 2)
-                # self.ram[pc] = 0
+                operand_a = self.ram_read(pc + 1)
+                operand_b = self.ram_read(pc + 2)
+                self.reg[0] = operand_a
+                self.reg[1] = operand_b
+                # print(self.reg)
+                pc += 2
+                
+            # MULti
+            if ir == 0b10100010:
+                a = self.reg[0]
+                b = self.reg[1]
+                self.alu('MULT',a,b)
+                # print(f"{self.reg[0]}    {self.reg[1]}")
                 pc+=2
                 
-            elif ir == 0b1000111:
+            # print operation
+            if ir == 0b01000111:
                 print(self.reg[0])
                 pc +=2
+                
+            # halt operation  
             elif ir == 0b001:
                 self.halt()
             else:
@@ -106,4 +133,3 @@ class CPU:
 cpu = CPU()
 
 cpu.run()
-# print(bin(71))
