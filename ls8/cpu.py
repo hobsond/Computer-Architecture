@@ -148,7 +148,13 @@ class CPU:
                 # print(self.reg[7])
                 pc +=2
 
+            elif  ir == 0b01000110:
+                # print('ello gov nor')   
+                x = self.reg[7] 
+                self.reg[self.ram_read(pc + 1)] = x
+                self.reg[7] += 1
                 
+                pc +=2
             # halt operation  
             elif ir == 0b001:
                 self.halt()
