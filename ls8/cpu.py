@@ -4,7 +4,6 @@ import sys
 
 class CPU:
     """Main CPU class."""
-
     def __init__(self):
         """Construct a new CPU."""
         self.ram = [0] * 256
@@ -15,14 +14,25 @@ class CPU:
         self.MDR = 3
         self.fl = 4
         self.running = False
-    
+        self.instructions ={
+            0b10100000 : 'add',
+            0b10100111: "cmp",
+            0b01000101 : "PUSH",
+            0b01000110: "POP",
+            0b10000100: "ST",
+            0b10000011: 'LD',
+            0b01001000: "PRA",
+            0b0:'NOP',
+            0b01000111:'PRN',
+            0b10100010: "MULTIPLY",
+            0b01100110: "decrement",
+            0b10100011: "div",
+            
+        }
     
     def ram_read(self,address):
         return self.ram[address]
     
-    # def ram_write(self,address,value):
-    #     self.ram[address] = value
-        
     def load(self,prog):
         """Load a program into memory."""
         program = []
@@ -98,37 +108,44 @@ class CPU:
         while self.running:
             # load program
             self.load(sys.argv[1])
+            
+            
             # set the registration
             ir = self.ram_read(pc)
            
             #ldi operation
             if ir ==  0b10000010:
-                operand_a = self.ram_read(pc + 1)
-                operand_b = self.ram_read(pc + 2)
-                self.reg[0] = operand_a
-                self.reg[1] = operand_b
-                # print(self.reg)
-                pc += 2
+                self.reg[self.ram_read(pc+1)] = self.ram_read(pc+2)
+                pc += 3
                 
             # MULti
-            if ir == 0b10100010:
+            elif ir == 0b10100010:
                 a = self.reg[0]
                 b = self.reg[1]
                 self.alu('MULT',a,b)
-                # print(f"{self.reg[0]}    {self.reg[1]}")
-                pc+=2
+                pc+=3
                 
             # print operation
-            if ir == 0b01000111:
+            elif ir == 0b01000111:
                 print(self.reg[0])
                 pc +=2
                 
             # halt operation  
             elif ir == 0b001:
                 self.halt()
-            else:
-                pc+=1
             
+            else:
+                if ir not in self.instructions:
+                    print(f'Unrecognized instruction {bin(ir)}  at address{pc} ')
+                    if self.ram_read(pc + 1) == 0:
+                        pc +=1
+                else:
+                    print(f"Cannot find instruction {self.instructions[ir]} // {bin(ir)}  at address  {pc}")
+                    
+                    if self.ram_read(pc + 1) == 0:
+                        pc +=1
+                pc+=1
+      
 
 cpu = CPU()
 

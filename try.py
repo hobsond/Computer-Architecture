@@ -1,3 +1,1 @@
-print(0xa2)
-print(0x0b <<1)
-print(0x0a)
+print(bin(160))
