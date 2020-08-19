@@ -1,6 +1,7 @@
 """CPU functionality."""
 
 import sys
+from queue import LifoQueue
 
 class CPU:
     """Main CPU class."""
@@ -29,6 +30,8 @@ class CPU:
             0b10100011: "div",
             
         }
+        self.reg[7] = 0xf4
+        
     
     def ram_read(self,address):
         return self.ram[address]
@@ -129,6 +132,22 @@ class CPU:
             elif ir == 0b01000111:
                 print(self.reg[0])
                 pc +=2
+            
+            # PUSH
+            elif ir == 0b01000101:  
+                # Decrement SP
+                # if self.reg[7] >= 1:
+                    
+                self.reg[7] -= 1
+                # Get value from register
+                reg_num = self.ram_read(pc + 1)
+                value = self.reg[reg_num] # We want to push this value
+                # Store it on the stack
+                top_of_stack_addr = self.reg[7]
+                self.ram[top_of_stack_addr] = value
+                # print(self.reg[7])
+                pc +=2
+
                 
             # halt operation  
             elif ir == 0b001:
@@ -148,5 +167,5 @@ class CPU:
       
 
 cpu = CPU()
-
+# print(cpu.reg)
 cpu.run()
