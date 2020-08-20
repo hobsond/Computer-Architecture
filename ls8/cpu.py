@@ -28,6 +28,7 @@ class CPU:
             0b10100010: "MULTIPLY",
             0b01100110: "decrement",
             0b10100011: "div",
+            0b01010000: 'call'
             
         }
         self.reg[7] = 0xf4
@@ -111,28 +112,22 @@ class CPU:
         while self.running:
             # load program
             self.load(sys.argv[1])
-            
-            
             # set the registration
             ir = self.ram_read(pc)
-           
             #ldi operation
             if ir ==  0b10000010:
                 self.reg[self.ram_read(pc+1)] = self.ram_read(pc+2)
                 pc += 3
-                
             # MULti
             elif ir == 0b10100010:
                 a = self.reg[0]
                 b = self.reg[1]
                 self.alu('MULT',a,b)
                 pc+=3
-                
             # print operation
             elif ir == 0b01000111:
                 print(self.reg[0])
                 pc +=2
-            
             # PUSH
             elif ir == 0b01000101:  
                 # Decrement SP
@@ -147,14 +142,19 @@ class CPU:
                 self.ram[top_of_stack_addr] = value
                 # print(self.reg[7])
                 pc +=2
-
+            #Pop
             elif  ir == 0b01000110:
-                # print('ello gov nor')   
-                x = self.reg[7] 
+                #copy the value from the addres pointed
+                # to by sp to the given register
+                x = self.reg[7]
+                
+                
                 self.reg[self.ram_read(pc + 1)] = x
+                #increment sp
                 self.reg[7] += 1
                 
                 pc +=2
+    
             # halt operation  
             elif ir == 0b001:
                 self.halt()
