@@ -73,7 +73,14 @@ class CPU:
             self.reg[0] = reg_a * reg_b
         elif op == "DIV":
             self.reg[reg_a] /= self.reg[reg_b]
-            
+        elif op == "CMP":
+            if reg_a > reg_b:
+                self.reg[self.fl] = 0b00000010
+                
+            elif reg_a < reg_b:
+                self.reg[self.fl] = 0b00000100
+            else:
+                self.reg[self.fl] = 0b00000001 
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -176,6 +183,14 @@ class CPU:
                 self.reg[self.sp] += 1
                 
                 pc  = ret_add
+           
+            # CMP
+            elif ir == 0b10100111:
+                oppA = self.ram_read(pc + 1)
+                oppB = self.ram_read(pc + 2)
+                self.alu('CMP',oppA,oppB)
+                pc += 3
+                
             # halt operation  
             elif ir == 0b01:
                 self.halt()
