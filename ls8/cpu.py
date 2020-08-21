@@ -174,7 +174,6 @@ class CPU:
                 self.reg[7] += 1
                 
                 pc +=2
-            
             # call 
             elif ir == 0b01010000:
                 ret_add= pc +2
@@ -194,7 +193,6 @@ class CPU:
                 oppB = self.ram_read(pc + 2)
                 self.alu('CMP',oppA,oppB)
                 pc += 3
-            
             # jeq
             elif ir == 0b01010101:
                 oppA = self.ram[pc +1]
@@ -202,9 +200,6 @@ class CPU:
                 if self.reg[self.fl] == 0b001:
                     self.jmp(oppA)
                 pc +=2
-                    
-            
-            
             # jmp
             elif ir ==0b01010100:
                 oppA = self.ram[pc + 1]
