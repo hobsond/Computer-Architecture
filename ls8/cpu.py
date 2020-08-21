@@ -13,7 +13,7 @@ class CPU:
         self.ir = 1
         self.MAR =2
         self.MDR = 3
-        self.fl = 4
+        self.fl = 0b0000000
         self.sp = 7
         self.running = False
         self.instructions ={
@@ -77,13 +77,13 @@ class CPU:
         elif op == "DIV":
             self.reg[reg_a] /= self.reg[reg_b]
         elif op == "CMP":
-            if reg_a > reg_b:
-                self.reg[self.fl] = 0b00000010
+            if self.reg[reg_a] > self.reg[reg_b]:
+                self.fl = 0b00000010
                 
-            elif reg_a < reg_b:
-                self.reg[self.fl] = 0b00000100
+            elif self.reg[reg_a] < self.reg[reg_b]:
+                self.fl = 0b00000100
             else:
-                self.reg[self.fl] = 0b00000001 
+                self.fl = 0b00000001 
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -122,38 +122,37 @@ class CPU:
     def run(self):
         """Run the CPU."""
         self.running =True
-        pc = self.pc 
         while self.running:
             # load program
             self.load(sys.argv[1])
             # set the registration
-            ir = self.ram_read(pc)
+            ir = self.ram_read(self.pc)
             #ldi operation
             if ir ==  0b10000010:
-                self.reg[self.ram_read(pc+1)] = self.ram_read(pc+2)
-                pc += 3
+                self.reg[self.ram_read(self.pc+1)] = self.ram_read(self.pc+2)
+                self.pc += 3
             # MULti
             elif ir == 0b10100010:
                 a = self.reg[0]
                 b = self.reg[1]
                 self.alu('MULT',a,b)
-                pc+=3
+                self.pc+=3
             # add
             elif ir == 0b10100000:
-                a = self.ram_read(pc + 1)
-                b = self.ram_read(pc + 2)
+                a = self.ram_read(self.pc + 1)
+                b = self.ram_read(self.pc + 2)
                 self.alu("ADD",self.ram_read(self.reg[a]),self.ram_read(self.reg[b]))
-                pc += 3
+                self.pc += 3
            # print operation
             elif ir == 0b01000111:
-                print(self.reg[0])
-                pc +=2
+                print(self.reg[self.ram_read(self.pc + 1)])
+                self.pc +=2
             # PUSH
             elif ir == 0b01000101:  
                 # Decrement SP
                 # if self.reg[7] >= 1:
                     
-                self.reg[7] -= 1
+                self.reg[self.sp] -= 1
                 # Get value from register
                 reg_num = self.ram_read(pc + 1)
                 value = self.reg[reg_num] # We want to push this value
@@ -166,51 +165,62 @@ class CPU:
             elif  ir == 0b01000110:
                 #copy the value from the addres pointed
                 # to by sp to the given register
-                x = self.reg[7]
+                x = self.ram[self.reg[self.sp]]
                 
                 
-                self.reg[self.ram_read(pc + 1)] = x
+                self.reg[self.ram_read(self.pc + 1)] = x
                 #increment sp
-                self.reg[7] += 1
+                self.reg[self.sp] += 1
                 
-                pc +=2
+                self.pc +=2
             # call 
             elif ir == 0b01010000:
-                ret_add= pc +2
+                ret_add = self.pc +2
                 self.reg[self.sp] -= 1
                 self.ram[self.reg[self.sp]] = ret_add
-                reg = self.ram[pc +1]
-                pc = self.reg[reg]
+                reg = self.ram_read(self.pc + 1)
+                self.pc = self.reg[reg]
             # ret
             elif ir == 0b00010001:
                 ret_add = self.ram[self.reg[self.sp]]
                 self.reg[self.sp] += 1
                 
-                pc  = ret_add
+                self.pc  = ret_add
             # CMP
             elif ir == 0b10100111:
-                oppA = self.ram_read(pc + 1)
-                oppB = self.ram_read(pc + 2)
+                oppA = self.ram_read(self.pc + 1)
+                oppB = self.ram_read(self.pc + 2)
                 self.alu('CMP',oppA,oppB)
-                pc += 3
+                self.pc += 3
+                
             # jeq
             elif ir == 0b01010101:
-                oppA = self.ram[pc +1]
-                ret_add = pc + 2
-                if self.reg[self.fl] == 0b001:
-                    self.jmp(oppA)
-                pc +=2
+                oppA = self.reg[self.ram[self.pc + 1]]
+                
+                ret_add = self.pc + 2
+                if self.fl == 0b0000001:
+                    self.pc = oppA
+                else:
+                    
+                    self.pc +=2
+                
             # jmp
-            elif ir ==0b01010100:
-                oppA = self.ram[pc + 1]
-                self.jmp(oppA)
-                pc +=2
+            elif ir == 0b01010100:
+                oppA = self.reg[self.ram[self.pc + 1]]
+                
+                self.pc = oppA
+                
             # JNE
             elif ir == 0b1010110:
-                oppA = self.ram_read(self.ram[pc + 1])
-                if self.reg[self.fl] == 0b001:
-                    self.jmp(oppA)
-                pc +=2
+                oppA = self.reg[self.ram[self.pc + 1]]
+                if self.fl == 0b00000100 or self.fl == 0b00000010:
+                    self.pc = oppA
+                else:
+                    
+                    self.pc +=2
+                
+                
+                
             # halt operation  
             elif ir == 0b01:
                 self.halt()
