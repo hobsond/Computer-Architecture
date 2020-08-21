@@ -14,6 +14,7 @@ class CPU:
         self.MAR =2
         self.MDR = 3
         self.fl = 4
+        self.sp = 7
         self.running = False
         self.instructions ={
             0b10100000 : 'add',
@@ -124,7 +125,13 @@ class CPU:
                 b = self.reg[1]
                 self.alu('MULT',a,b)
                 pc+=3
-            # print operation
+            # add
+            elif ir == 0b10100000:
+                a = self.ram_read(pc + 1)
+                b = self.ram_read(pc + 2)
+                self.alu("ADD",self.ram_read(self.reg[a]),self.ram_read(self.reg[b]))
+                pc += 3
+           # print operation
             elif ir == 0b01000111:
                 print(self.reg[0])
                 pc +=2
@@ -138,7 +145,7 @@ class CPU:
                 reg_num = self.ram_read(pc + 1)
                 value = self.reg[reg_num] # We want to push this value
                 # Store it on the stack
-                top_of_stack_addr = self.reg[7]
+                top_of_stack_addr = self.reg[self.sp]
                 self.ram[top_of_stack_addr] = value
                 # print(self.reg[7])
                 pc +=2
@@ -154,9 +161,23 @@ class CPU:
                 self.reg[7] += 1
                 
                 pc +=2
-    
+
+            
+            # call 
+            elif ir == 0b01010000:
+                ret_add= pc +2
+                self.reg[self.sp] -= 1
+                self.ram[self.reg[self.sp]] = ret_add
+                reg = self.ram[pc +1]
+                pc = self.reg[reg]
+            # ret
+            elif ir == 0b00010001:
+                ret_add = self.ram[self.reg[self.sp]]
+                self.reg[self.sp] += 1
+                
+                pc  = ret_add
             # halt operation  
-            elif ir == 0b001:
+            elif ir == 0b01:
                 self.halt()
             
             else:
