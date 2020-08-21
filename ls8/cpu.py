@@ -29,7 +29,10 @@ class CPU:
             0b10100010: "MULTIPLY",
             0b01100110: "decrement",
             0b10100011: "div",
-            0b01010000: 'call'
+            0b01010000: 'call',
+            0b01010101: "jeq",
+            0b01010110: 'jne',
+            0b01010100: "jmp"
             
         }
         self.reg[7] = 0xf4
@@ -104,6 +107,9 @@ class CPU:
 
         print()
 
+    def jmp(self, op_a):
+        self.pc = self.reg[op_a]
+        
     def halt(self):
             self.running = False
     
@@ -116,7 +122,7 @@ class CPU:
     def run(self):
         """Run the CPU."""
         self.running =True
-        pc = 0 
+        pc = self.pc 
         while self.running:
             # load program
             self.load(sys.argv[1])
@@ -168,7 +174,6 @@ class CPU:
                 self.reg[7] += 1
                 
                 pc +=2
-
             
             # call 
             elif ir == 0b01010000:
@@ -183,14 +188,34 @@ class CPU:
                 self.reg[self.sp] += 1
                 
                 pc  = ret_add
-           
             # CMP
             elif ir == 0b10100111:
                 oppA = self.ram_read(pc + 1)
                 oppB = self.ram_read(pc + 2)
                 self.alu('CMP',oppA,oppB)
                 pc += 3
-                
+            
+            # jeq
+            elif ir == 0b01010101:
+                oppA = self.ram[pc +1]
+                ret_add = pc + 2
+                if self.reg[self.fl] == 0b001:
+                    self.jmp(oppA)
+                pc +=2
+                    
+            
+            
+            # jmp
+            elif ir ==0b01010100:
+                oppA = self.ram[pc + 1]
+                self.jmp(oppA)
+                pc +=2
+            # JNE
+            elif ir == 0b1010110:
+                oppA = self.ram_read(self.ram[pc + 1])
+                if self.reg[self.fl] == 0b001:
+                    self.jmp(oppA)
+                pc +=2
             # halt operation  
             elif ir == 0b01:
                 self.halt()
